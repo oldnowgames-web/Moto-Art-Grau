@@ -5,6 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Moto Art Grau</title>
     <link rel="stylesheet" href="style.css">
+
+    <style id="mobile-touch-fixes">
+        /* ===== Ajustes para celular (ativados via html.is-mobile) ===== */
+        :root{
+            --mt-edge: 16px;            /* margem lateral dos botões */
+            --mt-wheelie-bottom: 120px; /* altura do botão GRAU (acima das setas ◀ ▶) */
+            --mt-interact-bottom: 190px;/* altura do botão E (lado direito) */
+        }
+        @media (max-height: 480px){
+            :root{ --mt-wheelie-bottom: 100px; --mt-interact-bottom: 150px; }
+        }
+
+        /* Botão de empinar (GRAU) no lado ESQUERDO da tela */
+        html.is-mobile #btnWheelie{
+            position: fixed !important;
+            left: calc(var(--mt-edge) + env(safe-area-inset-left, 0px)) !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: calc(var(--mt-wheelie-bottom) + env(safe-area-inset-bottom, 0px)) !important;
+            margin: 0 !important;
+            z-index: 60;
+        }
+
+        /* Botão "E" (aceitar missão) - só em celular, no mundo aberto (visibilidade controlada pelo game.js) */
+        #btn-interact{
+            display: none;
+            position: fixed;
+            right: calc(var(--mt-edge) + env(safe-area-inset-right, 0px));
+            bottom: calc(var(--mt-interact-bottom) + env(safe-area-inset-bottom, 0px));
+            width: 64px; height: 64px; border-radius: 50%;
+            align-items: center; justify-content: center;
+            font: 800 28px/1 system-ui, sans-serif; color: #fff;
+            background: rgba(124,77,255,.88);
+            border: 2px solid rgba(255,255,255,.75);
+            box-shadow: 0 4px 14px rgba(0,0,0,.45);
+            z-index: 90;
+            opacity: .55;
+            user-select: none; -webkit-user-select: none;
+            touch-action: none; -webkit-tap-highlight-color: transparent;
+        }
+        /* totem ao alcance: botão fica forte e pulsa */
+        #btn-interact.near{ opacity: 1; background: rgba(255,170,0,.95); animation: mtPulse 1s ease-in-out infinite; }
+        #btn-interact:active{ transform: scale(.9); }
+        html.is-mobile #interaction-prompt{ pointer-events: auto; touch-action: none; }
+        @keyframes mtPulse{
+            0%,100%{ box-shadow: 0 0 0 0 rgba(255,201,60,.8), 0 4px 14px rgba(0,0,0,.45); }
+            50%    { box-shadow: 0 0 0 14px rgba(255,201,60,0), 0 4px 14px rgba(0,0,0,.45); }
+        }
     </style>
 </head>
 <body>
@@ -83,6 +131,9 @@
             <div class="touch-btn" id="btnAccel" data-key="w">▲</div>
         </div>
     </div>
+
+    <!-- Botão "E" para celular: aceitar missões no mundo aberto -->
+    <div id="btn-interact" role="button" aria-label="Interagir / aceitar missão">E</div>
 
     <div id="toast"></div>
     <div id="hint-bar"></div>
@@ -260,5 +311,18 @@
     <script src="js/modelo-moto.js"></script>
     <script src="js/audio-motor.js"></script>
     <script src="js/game.js"></script>
+    <script>
+    /* Marca html.is-mobile com a MESMA regra que o game.js usa para mostrar os controles de toque */
+    (function () {
+        var root = document.documentElement;
+        function check() {
+            var coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+            root.classList.toggle('is-mobile', window.innerWidth <= 820 || !!coarse);
+        }
+        check();
+        window.addEventListener('resize', check);
+        window.addEventListener('orientationchange', check);
+    })();
+    </script>
 </body>
 </html>

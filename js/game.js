@@ -2323,10 +2323,10 @@
                 if (best && bestDist <= interactR) {
                     cityNearMarker = best.key;
                     if (missionTextEl) {
-                        missionTextEl.innerText = best.short + ' disponível!\nPressione E para aceitar';
+                        missionTextEl.innerText = best.short + ' disponível!\n' + (isMobileUI() ? 'Toque no botão E para aceitar' : 'Pressione E para aceitar');
                     }
                     if (promptEl) {
-                        promptEl.innerHTML = 'Pressione <span class="key-badge">E</span> para ver a missão';
+                        promptEl.innerHTML = (isMobileUI() ? 'Toque em ' : 'Pressione ') + '<span class="key-badge">E</span> para ver a missão';
                         promptEl.style.display = 'block';
                     }
                 } else if (best && bestDist <= detectR) {
@@ -2570,6 +2570,31 @@ window.addEventListener('keyup', (e) => {
     if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
     if (e.code === 'Space') keys.space = false;
 });
+
+        // ==================== BOTÃO "E" (CELULAR): ABRIR A MISSÃO DO TOTEM NO MUNDO ABERTO ====================
+        // Faz o mesmo que a tecla E: openMissionModal(cityNearMarker). Só existe em celular (html.is-mobile).
+        const interactBtnEl = document.getElementById('btn-interact');
+        let interactBtnShown = false, interactBtnNear = false;
+        function isMobileUI() { return document.documentElement.classList.contains('is-mobile'); }
+        function pressInteract(ev) {
+            if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+            if (appState === 'playing' && gameMode === 'cidade' && !cityMission && !isMissionModalOpen && cityNearMarker) {
+                openMissionModal(cityNearMarker);
+            }
+        }
+        function updateInteractBtn() {
+            if (!interactBtnEl) return;
+            const show = isMobileUI() && appState === 'playing' && gameMode === 'cidade' && !cityMission && !isMissionModalOpen && !raceResultShown;
+            const near = show && !!cityNearMarker;
+            if (show !== interactBtnShown) { interactBtnShown = show; interactBtnEl.style.display = show ? 'flex' : 'none'; }
+            if (near !== interactBtnNear) { interactBtnNear = near; interactBtnEl.classList.toggle('near', near); }
+        }
+        if (interactBtnEl) {
+            interactBtnEl.addEventListener('pointerdown', pressInteract);
+            interactBtnEl.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+        const interactPromptEl = document.getElementById('interaction-prompt');
+        if (interactPromptEl) interactPromptEl.addEventListener('pointerdown', (e) => { if (isMobileUI()) pressInteract(e); });
 
         const uiScore = document.getElementById('scoreDisplay'), uiTimer = document.getElementById('timer'), uiSpeed = document.getElementById('speedDisplay');
         const uiAngle = document.getElementById('gaugeAngleBig');
@@ -3024,6 +3049,7 @@ function startCityMission(mission) {
             requestAnimationFrame(animate);
             const delta = Math.min(clock.getDelta(), 0.1);
             menuView();
+            updateInteractBtn();
 
             if(appState === 'menu') {
                 bikeContainer.rotation.y += 0.01;
